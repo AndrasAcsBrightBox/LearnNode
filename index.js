@@ -70,12 +70,13 @@ function conferences(req, res) {
 
                     confListJson.ResponseOfClientInterest.Results[0]["a:ClientInterest"].forEach((conference) => {
                         confereces.push( {
-                            name: conference['a:Name'][0]['b:Value'],
+                            name: conference['a:Name'][0]['b:Value'][0],
                             startDate : conference['a:StartDate'][0],
                             endDate : conference['a:EndDate'][0],
                             city : conference['a:CityNames'][0]["b:LocalizedString"][0]['b:Value'][0]
                         });
                 });
+                res.writeHead(200, jsonContentType);
                 res.end(JSON.stringify(confereces));
             }
             });
