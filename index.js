@@ -2,43 +2,74 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 
-function servePage(pageFileName, req, res) {
-    fs.readFile(path.join(__dirname, 'public', pageFileName), 
-            (err, content) => {
-                if(err) throw err;
-                res.writeHead(200, {
-                    'Content-Type' : 'text/html'
-                });
-                res.end(content);
+const server = http.createServer((req, res) => {
+    // build file path
+    let filePath = path.join(
+        __dirname,
+        'public',
+        req.url === '/'
+            ? 'index.html'
+            : req.url);
+        
+    switch (path.extname(filePath)) {
+        case '.html':
+            res.writeHead(200, {
+                'Content-Type' : 'text/html'
             });
-}
+        break;
 
-const server = http.createServer(
-    (req, res) => {
-        
-        
-        switch(req.url){
-            case '/':
-                servePage('index.html', req, res); 
-            break;
+        case '.js':
+        res.writeHead(200, {
+            'Content-Type' : 'text/javascript'
+        });
+        break;
 
-            case '/about':
-                servePage('about.html', req, res); 
-            break;
+        case '.css':
+            res.writeHead(200, {
+                'Content-Type' : 'text/css'
+            });
+        break;
 
-            case '/api/users':
-                let users = [
-                    { 'name' : 'John Doe', 'age': 30},
-                    { name: 'Bob Smith', age: 40}
-                ];
-                res.writeHead(200, {
-                    'Content-Type' : 'application/json'
-                });
-                res.end(JSON.stringify(users));
-            break;
-        }
+        case '.json':
+            res.writeHead(200, {
+                'Content-Type' : 'application/json'
+            });
+        break;
+
+        case '.png':
+            res.writeHead(200, {
+                'Content-Type' : 'image/png'
+            });
+        break;
+
+        case '.jpg':
+            res.writeHead(200, {
+                'Content-Type' : 'image/jpg'
+            });
+        break;
     }
-);
+
+    fs.readFile(filePath, (err, content) => {
+        if (err) {
+            if(err.code == 'ENOENT'){
+                fs.readFile(path.join(__dirname, 'public', '404.html'), 
+                (err, content) => {
+                    res.writeHead(200, {
+                        'Content-Type' : 'text/html'
+                    });
+                    res.end(content, 'utf-8');
+                })
+            }
+            else {
+                res.writeHead(500);
+                res.end(`Server error: ${err.code}`);
+            }
+        }
+        else {
+            res.end(content, 'utf-8');
+        }
+    });
+});
 
 // This may come from an environment variable.
 const PORT = process.env.PORT || 5000; 
