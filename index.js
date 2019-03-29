@@ -1,80 +1,43 @@
 const http = require('http');
-const path = require('path');
-const fs = require('fs');
+const url = require('url');
+const parseXmlString = require('xml2js').parseString;
 
-const server = http.createServer((req, res) => {
-    // build file path
-    let filePath = path.join(
-        __dirname,
-        'public',
-        req.url === '/'
-            ? 'index.html'
-            : req.url);
-        
-    switch (path.extname(filePath)) {
-        case '.html':
-            res.writeHead(200, {
-                'Content-Type' : 'text/html'
+const baseUrl = 'http://nyvdevdaweb4/icmservice.daicmsql4.15/DealAxis';
+
+const server = http.createServer((req, res) =>
+{
+    var urlRequested = req.url.substr(1);
+    switch(urlRequested) {
+        case 'login':
+            if(req.method != 'POST') {
+                res.writeHead(500);
+                res.end('Login method must be issued with a POST request.');
+                return;
+            }
+            let postedBody = '';
+            req.on('data', chunk => {
+                postedBody += chunk.toString();
             });
-        break;
-
-        case '.js':
-        res.writeHead(200, {
-            'Content-Type' : 'text/javascript'
-        });
-        break;
-
-        case '.css':
-            res.writeHead(200, {
-                'Content-Type' : 'text/css'
-            });
-        break;
-
-        case '.json':
-            res.writeHead(200, {
-                'Content-Type' : 'application/json'
-            });
-        break;
-
-        case '.png':
-            res.writeHead(200, {
-                'Content-Type' : 'image/png'
-            });
-        break;
-
-        case '.jpg':
-            res.writeHead(200, {
-                'Content-Type' : 'image/jpg'
+            let loginData = null;
+            req.on('end', () => { 
+                loginData = JSON.parse(postedBody);
+                http.get(baseUrl + `/security/users/${loginData.uname}/access?password=${loginData.pass}`, (resp) => {
+                    res.writeHead(200, {
+                        'Content-Type' : 'application/json'
+                    });
+                    let loginResponse = '';
+                    resp.on('data', chunk => {
+                        loginResponse += chunk.toString();
+                    })
+                    resp.on('end', () => {
+                        parseXmlString(loginResponse, (err, loginResponseJson) =>  {
+                            res.end(JSON.stringify(loginResponseJson));
+                        });
+                    });
+                })
             });
         break;
     }
-
-    fs.readFile(filePath, (err, content) => {
-        if (err) {
-            if(err.code == 'ENOENT'){
-                fs.readFile(path.join(__dirname, 'public', '404.html'), 
-                (err, content) => {
-                    res.writeHead(200, {
-                        'Content-Type' : 'text/html'
-                    });
-                    res.end(content, 'utf-8');
-                })
-            }
-            else {
-                res.writeHead(500);
-                res.end(`Server error: ${err.code}`);
-            }
-        }
-        else {
-            res.end(content, 'utf-8');
-        }
-    });
 });
 
-// This may come from an environment variable.
-const PORT = process.env.PORT || 5000; 
-
-server.listen(PORT,
-    () => {
-        console.log(`Server running on ${PORT}.`)
-    });
+server.listen(5000);

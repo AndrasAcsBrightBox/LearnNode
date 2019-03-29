@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "nodemon": "^1.18.10"
