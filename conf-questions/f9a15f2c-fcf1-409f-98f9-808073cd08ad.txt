@@ -1,0 +1,1 @@
+{name : 'Ági', question: 'What does the fox say?!', conferenceName: 'Creative Capital at it's finest'}

@@ -1,0 +1,1 @@
+{name : 'Andras11', question: 'How it can be, that this app is so very cool?!', conferenceName: 'Creative Capital at it's finest'}

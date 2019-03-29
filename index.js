@@ -1,8 +1,8 @@
 const http = require('http');
-const https = require('https');
-const url = require('url');
 const parseXmlString = require('xml2js').parseString;
-const jsonToXml = require('json2xml');
+const fs = require('fs');
+const path = require('path');
+const uuid = require('uuid');
 
 const dealAxisServiceBaseUrl = 'http://nyvdevdaweb4/icmservice.daicmsql4.15/DealAxis/';
 const apiServiceBaseUrl = 'http://nyvdevdaweb4';
@@ -22,8 +22,44 @@ const server = http.createServer((req, res) =>
         case 'conferences':
             conferences(req, res);
         break;
+
+        case 'conferences/questions':
+            questions(req, res);
+        break;
     }
 });
+
+function questions(req, res) {
+    if(req.method == 'GET'){
+        var questions = [];
+        fs.readdir(path.join(__dirname, 'conf-questions'), (err, files) => {
+            files.forEach((file) => {
+                questions.push(fs.readFileSync(path.join(__dirname, 'conf-questions', file), 'utf8'));
+            })
+            res.writeHead(200, jsonContentType);
+            res.end(JSON.stringify({questions}));
+        })
+    }
+    else if(req.method == 'POST') {
+        var newFileName = uuid.v4();
+
+        let postedQuestion = '';
+        req.on('data', chunk => {
+            postedQuestion += chunk.toString();
+        });
+
+        req.on('end', () => {
+            fs.writeFile(
+                path.join(__dirname, 'conf-questions', `${newFileName}.txt`),
+                postedQuestion,
+                (err) => {
+                    if(err) throw err;
+                    res.writeHead(200, jsonContentType);
+                    res.end(JSON.stringify({'success' : true}));
+                });
+        })
+    }
+}
 
 function conferences(req, res) {
     if(req.method != 'GET') {
